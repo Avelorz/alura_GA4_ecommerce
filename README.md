@@ -101,6 +101,9 @@ ORDER BY event_date ASC;
 
 ## Parte 2 — Tabela analítica
 
+![Arquitetura](Linhagem.jpg)
+( Zoom ao clicar, grafo criado pela feature de linhagem do Dataform )
+
 A modelagem foi feita em duas camadas principais:
 
 ### Bronze — `definitions/bronze_events`
