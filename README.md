@@ -1,4 +1,4 @@
-# Case Técnico — Engenheiro de Dados (MarTech)
+# Case Técnico — Engenheiro de Dados (MarTech-Alura)
 
 ## Objetivo
 
