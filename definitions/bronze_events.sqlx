@@ -1,5 +1,15 @@
+js {
+  const today = new Date();
+  const end = today.toISOString().slice(0, 10).replace(/-/g, "");
+
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 15);
+  const start = startDate.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
 config {
   type: "incremental",
+  uniqueKey: ["event_timestamp", "event_name", "user_pseudo_id"],
   description: "Tabela bronze com dados brutos de eventos vindos do GA4",
   columns: {
     event_date: { description: "Data do evento" },
@@ -34,7 +44,7 @@ WITH events AS (
   SELECT 
     *
   FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
-  ${ when(incremental(), `WHERE event_date >= (SELECT MAX(event_date) FROM ${self()})`) }
+  ${when(incremental(),`WHERE _TABLE_SUFFIX BETWEEN '${start}' AND '${end}'`,`WHERE TRUE`)}
   
 )
 

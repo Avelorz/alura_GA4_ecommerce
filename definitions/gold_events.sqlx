@@ -1,11 +1,16 @@
 config {
   type: "view",
-  description: "Tabela gold trazendo informacoes de quantidade de views_item, begin_checkout, purchase e taxa de conversao",
+  assertions: {
+    nonNull: ["event_date", "event_name"],
+    rowConditions: ["usuarios_view_item > 0, usuarios_begin_checkout > 0, usuarios_purchase > 0, conversion_rate > 0"]
+  },
   dependOnDependencyAssertions: true,
+  description: "Tabela gold trazendo informacoes de quantidade de views_item, begin_checkout, purchase e taxa de conversao",
   columns: {
-    qtd_view_item: { description: "Quantidade de linhas com o nome do evento = view_item" },
-    qtd_begin_checkout: { description: "Quantidade de linhas com o nome do evento = begin_checkout" },
-    qtd_purchase: { description: "Quantidade de linhas com o nome do evento = purchase" },
+    event_date: { description: "Data do evento" },
+    usuarios_view_item: { description: "Quantidade de usuarios distintos que realizaram um evento de view_item" },
+    usuarios_begin_checkout: { description: "Quantidade de usuarios distintos que realizaram um evento de begin_checkout" },
+    usuarios_purchase: { description: "Quantidade de usuarios distintos que realizaram um evento de purchase" },
     conversion_rate: { description: "Taxa de conversao de compra qtd_begin_checkout / qtd_purchase" }
   }
 }
@@ -13,7 +18,9 @@ config {
 WITH silver_events AS (
 
 SELECT
-  *
+  event_date
+  user_pseudo_id,
+  event_name
 FROM ${ref("silver_events")}
 
 ),
@@ -21,16 +28,18 @@ FROM ${ref("silver_events")}
 count_events AS (
 
 SELECT
-  CAST(COUNTIF(event_name = 'view_item') AS INT) AS qtd_view_item,
-  CAST(COUNTIF(event_name = 'begin_checkout') AS INT) AS qtd_begin_checkout,
-  CAST(COUNTIF(event_name = 'purchase') AS INT) AS qtd_purchase
+  event_date,
+  COUNT(DISTINCT IF(event_name = 'view_item', user_pseudo_id, NULL)) AS usuarios_view_item,
+  COUNT(DISTINCT IF(event_name = 'begin_checkout', user_pseudo_id, NULL)) AS usuarios_begin_checkout,
+  COUNT(DISTINCT IF(event_name = 'purchase', user_pseudo_id, NULL)) AS usuarios_purchase
 FROM silver_events
 
 )
 
 SELECT
-  qtd_view_item,
-  qtd_begin_checkout,
-  qtd_purchase,
-  CAST(((qtd_purchase / qtd_begin_checkout) * 100) AS FLOAT64) AS conversion_rate
+  event_date,
+  usuarios_view_item,
+  usuarios_begin_checkout,
+  usuarios_purchase,
+  SAFE_DIVIDE(usuarios_purchase, usuarios_begin_checkout) AS conversion_rate
 FROM count_events

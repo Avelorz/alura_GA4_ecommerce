@@ -1,8 +1,7 @@
 config {
   type: "table",
   assertions: {
-    nonNull: ["event_date", "event_name"],
-    uniqueKey: ["event_timestamp", "event_name", "user_pseudo_id"]
+    nonNull: ["event_date", "event_name"]
   },
   description: "Tabela silver com colunas especificas e tratamento de eventos vindos da bronze_events",
   columns: {
@@ -21,14 +20,20 @@ config {
 WITH bronze_events AS (
 
 SELECT
-  *
+  event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name,
+  event_params
 FROM ${ref("bronze_events")}
 
-)
+), 
+
+unnest_events_params AS (
 
 SELECT
   PARSE_DATE("%Y%m%d", event_date) AS event_date,
-  event_timestamp,
+  TIMESTAMP_MICROS(event_timestamp) AS event_timestamp,
   user_pseudo_id,
   event_name,
   MAX(IF(ep.key = 'source', ep.value.string_value, NULL)) AS source,
@@ -44,3 +49,16 @@ GROUP BY
   event_timestamp,
   user_pseudo_id,
   event_name
+)
+
+SELECT
+  event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name,
+  source,
+  medium,
+  page_location,
+  value,
+  insert_at
+FROM unnest_events_params

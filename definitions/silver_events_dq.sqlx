@@ -6,13 +6,31 @@ config {
 WITH silver_events AS (
 
 SELECT
-  *
+  event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name,
+  source,
+  medium,
+  page_location,
+  value,
+  insert_at
+FROM unnest_ev
 FROM ${ref("silver_events")}
 
 )
 
 SELECT
-  *
+  event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name,
+  source,
+  medium,
+  page_location,
+  value,
+  insert_at
+FROM unnest_ev
 FROM silver_events
 WHERE event_name = 'purchase'
   AND value IS NULL
