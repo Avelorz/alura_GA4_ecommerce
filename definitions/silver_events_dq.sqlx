@@ -1,0 +1,19 @@
+config {
+  type: "assertion",
+  description: "Teste de qualidade tabela silver"
+}
+
+WITH silver_events AS (
+
+SELECT
+  *
+FROM ${ref("silver_events")}
+
+)
+
+SELECT
+  *
+FROM silver_events
+WHERE event_name = 'purchase'
+  AND value IS NULL
+    

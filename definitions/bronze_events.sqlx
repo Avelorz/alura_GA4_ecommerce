@@ -1,0 +1,66 @@
+config {
+  type: "incremental",
+  description: "Tabela bronze com dados brutos de eventos vindos do GA4",
+  columns: {
+    event_date: { description: "Data do evento" },
+    event_timestamp: { description: "Data e hora do evento em microsegundos" },
+    event_name: { description: "Nome do Evento" },
+    event_params: { description: "Struct Column com paramateros do evento ao nível da campanha e contextuais, bem como parâmetros de eventos definidos pelo utilizador" },
+    event_previous_timestamp: { description: "Data e hora em microssegundos em que ocorreu o evento anterior" },
+    event_value_in_usd: { description: "O valor de conversão de moeda (em USD) do parâmetro value do evento" },
+    event_bundle_sequence_id: { description: "O ID sequencial do pacote em que foram carregados estes eventos" },
+    event_server_timestamp_offset: { description: "Deslocação de data/hora entre o tempo de recolha e o tempo de carregamento em microssegundos" },
+    user_id: { description: "O ID exclusivo atribuído a um utilizador" },
+    user_pseudo_id: { description: "Um identificador pseudonimizado único atribuído a um utilizador quando este abre a app ou visita o site pela primeira vez" },
+    privacy_info: { description: "Struct Column contêm informações baseadas no estado do consentimento de um utilizador quando o modo de consentimento está ativado" },
+    user_properties: { description: "Struct Column contém todas as propriedades do utilizador que definiu. É repetido para cada chave associada a um utilizador" },
+    user_first_touch_timestamp: { description: "Data e hora em microssegundos que o utilizador abriu a app ou visitou o site pela primeira vez" },
+    user_ltv: { description: "Struct Column contém informações de valor do cliente relativas ao utilizador" },
+    device: { description: "Struct Column contém informações sobre o dispositivo de origem do evento" },
+    geo: { description: "Struct Column contém informações sobre a localização geográfica em que o evento foi iniciado" },
+    app_info: { description: "Struct Column contém informações sobre a app na qual o evento foi iniciado" },
+    traffic_source: { description: "Struct Column contém informações sobre a origem de tráfego que adquiriu o utilizador em primeiro lugar" },
+    stream_id: { description: "O ID numérico da stream de dados de origem do evento" },
+    platform: { description: "A plataforma de stream de dados (Web, iOS ou Android) de origem do evento" },
+    event_dimensions: { description: "O nome do host associado ao evento registado" },
+    ecommerce: { description: "Struct Column contém informações sobre os eventos de comércio eletrónico que foram configurados num Website ou numa app" },
+    items: { description: "Struct Column contém informações sobre itens incluídos num evento" },
+    insert_at: { description: "Data e hora da inserção do dado na tabela bronze" }
+  }
+}
+
+WITH events AS (
+
+  SELECT 
+    *
+  FROM `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
+  ${ when(incremental(), `WHERE event_date >= (SELECT MAX(event_date) FROM ${self()})`) }
+  
+)
+
+SELECT
+  event_date,
+  event_timestamp,
+  event_name,
+  event_params,
+  event_previous_timestamp,
+  event_value_in_usd,
+  event_bundle_sequence_id,
+  event_server_timestamp_offset,
+  user_id,
+  user_pseudo_id,
+  privacy_info,
+  user_properties,
+  user_first_touch_timestamp,
+  user_ltv,
+  device,
+  geo,
+  app_info,
+  traffic_source,
+  stream_id,
+  platform,
+  event_dimensions,
+  ecommerce,
+  items,
+  CURRENT_TIMESTAMP() AS insert_at
+FROM events

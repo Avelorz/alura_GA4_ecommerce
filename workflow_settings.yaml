@@ -1,0 +1,4 @@
+defaultProject: case-martech
+defaultDataset: ga4_ecommerce
+defaultAssertionDataset: ga4_ecommerce_assertions
+dataformCoreVersion: 3.0.42

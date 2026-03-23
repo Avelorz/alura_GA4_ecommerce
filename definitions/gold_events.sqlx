@@ -1,0 +1,36 @@
+config {
+  type: "view",
+  description: "Tabela gold trazendo informacoes de quantidade de views_item, begin_checkout, purchase e taxa de conversao",
+  dependOnDependencyAssertions: true,
+  columns: {
+    qtd_view_item: { description: "Quantidade de linhas com o nome do evento = view_item" },
+    qtd_begin_checkout: { description: "Quantidade de linhas com o nome do evento = begin_checkout" },
+    qtd_purchase: { description: "Quantidade de linhas com o nome do evento = purchase" },
+    conversion_rate: { description: "Taxa de conversao de compra qtd_begin_checkout / qtd_purchase" }
+  }
+}
+
+WITH silver_events AS (
+
+SELECT
+  *
+FROM ${ref("silver_events")}
+
+),
+
+count_events AS (
+
+SELECT
+  CAST(COUNTIF(event_name = 'view_item') AS INT) AS qtd_view_item,
+  CAST(COUNTIF(event_name = 'begin_checkout') AS INT) AS qtd_begin_checkout,
+  CAST(COUNTIF(event_name = 'purchase') AS INT) AS qtd_purchase
+FROM silver_events
+
+)
+
+SELECT
+  qtd_view_item,
+  qtd_begin_checkout,
+  qtd_purchase,
+  CAST(((qtd_purchase / qtd_begin_checkout) * 100) AS FLOAT64) AS conversion_rate
+FROM count_events

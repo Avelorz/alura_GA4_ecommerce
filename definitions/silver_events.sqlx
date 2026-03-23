@@ -1,0 +1,46 @@
+config {
+  type: "table",
+  assertions: {
+    nonNull: ["event_date", "event_name"],
+    uniqueKey: ["event_timestamp", "event_name", "user_pseudo_id"]
+  },
+  description: "Tabela silver com colunas especificas e tratamento de eventos vindos da bronze_events",
+  columns: {
+    event_date: { description: "Data do evento" },
+    event_timestamp: { description: "Data e hora do evento em microsegundos" },
+    user_pseudo_id: { description: "Um identificador pseudonimizado único atribuído a um utilizador quando este abre a app ou visita o site pela primeira vez" },
+    event_name: { description: "Nome do Evento" },
+    source: { description: "Nome da rede que adquiriu o utilizador em primeiro lugar" },
+    medium: { description: "Nome do meio (pesquisa paga, pesquisa orgânica, email, etc.) que adquiriu o usuario em primeiro lugar" },
+    page_location: { description: "URL da pagina" },
+    value: { description: "Valor da compra, quando for evento de compra" },
+    insert_at: { description: "Data e hora da inserção do dado na tabela silver" }
+  }
+}
+
+WITH bronze_events AS (
+
+SELECT
+  *
+FROM ${ref("bronze_events")}
+
+)
+
+SELECT
+  PARSE_DATE("%Y%m%d", event_date) AS event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name,
+  MAX(IF(ep.key = 'source', ep.value.string_value, NULL)) AS source,
+  MAX(IF(ep.key = 'medium', ep.value.string_value, NULL)) AS medium,
+  MAX(IF(ep.key = 'page_location', ep.value.string_value, NULL)) AS page_location,
+  MAX(IF(ep.key = 'value', COALESCE(ep.value.int_value, ep.value.float_value, ep.value.double_value), NULL)) AS value,
+  CURRENT_TIMESTAMP() AS insert_at
+FROM bronze_events
+CROSS JOIN UNNEST(event_params) AS ep
+WHERE event_name IN ('page_view', 'view_item', 'begin_checkout', 'purchase')
+GROUP BY
+  event_date,
+  event_timestamp,
+  user_pseudo_id,
+  event_name
